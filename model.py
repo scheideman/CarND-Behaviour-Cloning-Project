@@ -29,7 +29,9 @@ def generate_arrays_from_csv(path):
                 x_left = cv2.resize(x_left,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
                 x_right = cv2.resize(x_right,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
 
-                yield ({'convolution2d_input_1': np.array([x_center,x_left,x_right])}, {'dense_4': np.array([y_center,y_left,y_right])})
+                yield ({'convolution2d_input_1': np.array([x_center])}, {'dense_4': np.array([y_center])})
+                
+                #yield ({'convolution2d_input_1': np.array([x_center,x_left,x_right])}, {'dense_4': np.array([y_center,y_left,y_right])})
                 #yield ({'input_1': x_center, 'input_2': x_left,'input_3': x_right}, {'output': np.array([y_center,y_left,y_right])})
 
 
@@ -138,13 +140,13 @@ model.add(Dense(1,W_regularizer=l2(0.001)))
 
 model.compile('adam', 'mean_squared_error', ['accuracy'])
 print("Done compiling")
-history = model.fit(X_train, y_train, batch_size=10, nb_epoch=2, validation_split=0.2)
-"""
+#history = model.fit(X_train, y_train, batch_size=10, nb_epoch=2, validation_split=0.2)
+
 history = model.fit_generator(generate_arrays_from_csv('recording/driving_log.csv'),
                             validation_data=generate_arrays_from_csv('recording/driving_log_val.csv'),
                             nb_val_samples=1000,
                             samples_per_epoch=20000, nb_epoch=2)
-"""
+
 
 model.save_weights('model.h5')
 json_string = model.to_json()
