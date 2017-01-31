@@ -11,6 +11,16 @@ from random import shuffle
 import tensorflow as tf
 tf.python.control_flow_ops = tf
 
+#https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.ga5cuizax
+def add_random_brightness(image):
+    image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
+    random_bright = .25+np.random.uniform()
+    #print(random_bright)
+    image[:,:,2] = image[:,:,2]*random_bright
+    image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
+    return image
+
+
 #'recording/driving_log.csv'
 def generate_arrays_from_csv(path, batch_size = 40):
     while 1:
@@ -28,6 +38,11 @@ def generate_arrays_from_csv(path, batch_size = 40):
                 y_center = float(row[3])
                 y_left = float(row[3]) + 0.25
                 y_right = float(row[3]) - 0.25
+
+
+                x_center = add_random_brightness(x_center)
+                x_left = add_random_brightness(x_left)
+                x_right = add_random_brightness(x_right)
 
                 x_center = cv2.cvtColor(x_center, cv2.COLOR_RGB2YUV)
                 x_left = cv2.cvtColor(x_left, cv2.COLOR_RGB2YUV)
@@ -52,6 +67,7 @@ def generate_arrays_from_csv(path, batch_size = 40):
                     X_train = []
                     y_train = []
                     count += 1
+            print("One batch: {}".format(count))
             yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
             
         #yield ({'convolution2d_input_1': np.array([x_center,x_left,x_right])}, {'dense_4': np.array([y_center,y_left,y_right])})
@@ -142,7 +158,6 @@ model.add(Convolution2D(64,3,3,
                         W_regularizer=l2(0.0001),
                         init='normal'))
 model.add(Activation('relu'))
-model.add(Dropout(0.5))
 
 # 3X3 convolution layer
 model.add(Convolution2D(64,3,3,
@@ -152,7 +167,6 @@ model.add(Convolution2D(64,3,3,
                         W_regularizer=l2(0.0001),
                         init='normal'))
 model.add(Activation('relu'))
-model.add(Dropout(0.5))
 
 
 model.add(Flatten(input_shape=(3, 13, 64)))
