@@ -7,19 +7,42 @@ from keras.layers.core import Dense, Activation, Flatten
 from keras.layers import Dropout
 from keras.regularizers import l2
 from keras.optimizers import Adam
-from random import shuffle
 import tensorflow as tf
+import random
 tf.python.control_flow_ops = tf
 
-#https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.ga5cuizax
+#Retrieved from https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.ga5cuizax
 def add_random_brightness(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
     random_bright = .25+np.random.uniform()
-    #print(random_bright)
     image[:,:,2] = image[:,:,2]*random_bright
     image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
     return image
 
+def flip_image(image, steering_angle):
+    image = cv2.flip(image,1)
+    steering_angle = steering_angle * -1
+
+    return image, steering_angle
+
+def random_shadow(image):
+    image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
+    random_bright = .3 +np.random.uniform()
+    
+    x = random.randint(0, image.shape[1]-10)
+    y = random.randint(0, image.shape[0]-10)
+
+    width = random.randint(15,140)
+    if(x+ width > image.shape[1]):
+        x = image.shape[1] - x
+    height = random.randint(15,70)
+    if(y + height > image.shape[0]):
+        height = image.shape[0] - y
+    
+    image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*random_bright
+    image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
+
+    return image
 
 #'recording/driving_log.csv'
 def generate_arrays_from_csv(path, batch_size = 40):
@@ -27,7 +50,7 @@ def generate_arrays_from_csv(path, batch_size = 40):
         with open(path, newline='') as csvfile:
             file_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
             file_reader = list(file_reader)
-            shuffle(file_reader)
+            random.shuffle(file_reader)
             X_train = []
             y_train = []
             count = 0
@@ -39,10 +62,19 @@ def generate_arrays_from_csv(path, batch_size = 40):
                 y_left = float(row[3]) + 0.25
                 y_right = float(row[3]) - 0.25
 
-
                 x_center = add_random_brightness(x_center)
                 x_left = add_random_brightness(x_left)
                 x_right = add_random_brightness(x_right)
+                x_center = random_shadow(x_center)
+                x_left = random_shadow(x_left)
+                x_right = random_shadow(x_right)
+                
+
+                if(random.random() <= 0.4):
+                    x_center, y_center = flip_image(x_center,y_center)
+                    x_left, y_left = flip_image(x_left,y_left)
+                    x_right, y_right = flip_image(x_right,y_right) 
+                    
 
                 x_center = cv2.cvtColor(x_center, cv2.COLOR_RGB2YUV)
                 x_left = cv2.cvtColor(x_left, cv2.COLOR_RGB2YUV)
@@ -54,70 +86,35 @@ def generate_arrays_from_csv(path, batch_size = 40):
                 x_center_norm = cv2.normalize(x_center,x_center, alpha=-1, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
                 x_left_norm = cv2.normalize(x_left,x_left, alpha=-1, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
                 x_right_norm = cv2.normalize(x_right,x_left, alpha=-1, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-
+                
                 X_train.append(x_center_norm)
                 y_train.append(y_center)
                 X_train.append(x_left_norm)
                 y_train.append(y_left)
                 X_train.append(x_right_norm)
                 y_train.append(y_right)
+
+               
+
                 if(count == (batch_size-1)):
-                    yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
+                    #yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
+                    yield ({'dropout_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
                     count = 0
                     X_train = []
                     y_train = []
+                else:
                     count += 1
-            print("One batch: {}".format(count))
-            yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
+                
+            yield ({'dropout_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
             
         #yield ({'convolution2d_input_1': np.array([x_center,x_left,x_right])}, {'dense_4': np.array([y_center,y_left,y_right])})
         #yield ({'input_1': x_center, 'input_2': x_left,'input_3': x_right}, {'output': np.array([y_center,y_left,y_right])})
 
 
-X_train = []
-y_train = []
-
-with open('recording/driving_log.csv', newline='') as csvfile:
-    file_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-    print(type(file_reader))
-    count=0
-    file_reader = list(file_reader)
-    print(type(file_reader))
-    print(len(file_reader))
-    shuffle(file_reader)
-    for row in file_reader:
-        x_center = cv2.imread(row[0])
-        x_left = cv2.imread(row[1].strip())
-        x_right = cv2.imread(row[2].strip())
-        x_center = cv2.resize(x_center,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-        x_left = cv2.resize(x_left,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-        x_right = cv2.resize(x_right,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-
-     
-
-        X_train.append(x_center)
-        X_train.append(x_left)
-        X_train.append(x_right)
-        
-        y_center = float(row[3])
-        y_left = float(row[3]) + 0.25
-        y_right = float(row[3]) - 0.25
-        y_train.append(y_center)
-        y_train.append(y_left)
-        y_train.append(y_right)
-
-        count += 1
-        if(count == 4500):
-            break
-
-X_train = np.array(X_train)
-print(X_train.shape)
-y_train = np.array(y_train)
-print(y_train.shape)
-
 
 # Create the Sequential model
 model = Sequential()
+model.add(Dropout(0.1, input_shape=(80,160,3)))
 #model.add(Dropout(0.2))
 
 # 5X5 convolution layer
@@ -158,6 +155,7 @@ model.add(Convolution2D(64,3,3,
                         W_regularizer=l2(0.0001),
                         init='normal'))
 model.add(Activation('relu'))
+model.add(Dropout(0.5))
 
 # 3X3 convolution layer
 model.add(Convolution2D(64,3,3,
@@ -167,7 +165,7 @@ model.add(Convolution2D(64,3,3,
                         W_regularizer=l2(0.0001),
                         init='normal'))
 model.add(Activation('relu'))
-
+model.add(Dropout(0.5))
 
 model.add(Flatten(input_shape=(3, 13, 64)))
 
@@ -197,7 +195,7 @@ print("Done compiling")
 history = model.fit_generator(generate_arrays_from_csv('recording/driving_log.csv'),
                             validation_data=generate_arrays_from_csv('recording/driving_log_val.csv'),
                             nb_val_samples=4000,
-                            samples_per_epoch=24000, nb_epoch=5)
+                            samples_per_epoch=24000, nb_epoch=7)
 
 
 model.save_weights('model.h5')

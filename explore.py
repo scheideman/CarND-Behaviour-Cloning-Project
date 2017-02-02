@@ -2,7 +2,30 @@ import cv2
 import csv
 from random import shuffle
 import numpy as np
+import random
 
+def random_shadow(image):
+    print(type(image))
+    print(image.shape)
+    image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
+    random_bright = .5 * random.uniform(0.5,1)
+    
+    x = random.randint(0, image.shape[1]-10)
+    y = random.randint(0, image.shape[0]-10)
+
+    width = random.randint(15,140)
+    if(x+ width > image.shape[1]):
+        x = image.shape[1] - x
+    height = random.randint(15,70)
+    if(y + height > image.shape[0]):
+        height = image.shape[0] - y
+    
+    image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*random_bright
+    image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
+
+    print(type(image))
+    print(image.shape)
+    return image
 
 
 with open('recording/driving_log.csv', newline='') as csvfile:
@@ -26,6 +49,8 @@ with open('recording/driving_log.csv', newline='') as csvfile:
         x_right = cv2.resize(x_right,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
 
         
+    
+
         image1 = cv2.cvtColor(x_center,cv2.COLOR_RGB2HSV)
         random_bright = .25+np.random.uniform()
         image1[:,:,2] = image1[:,:,2]*random_bright
@@ -33,6 +58,7 @@ with open('recording/driving_log.csv', newline='') as csvfile:
     
         x_center = cv2.cvtColor(x_center, cv2.COLOR_RGB2YUV)
         #x_center_b = x_center[:,:,2] * .25+np.random.uniform()
+
 
         np.reshape(x_center,(1,x_center.shape[0],x_center.shape[1],x_center.shape[2]))
         np.reshape(x_left,(1,x_left.shape[0],x_left.shape[1],x_left.shape[2]))
@@ -44,8 +70,10 @@ with open('recording/driving_log.csv', newline='') as csvfile:
 
         print(stacked.shape)
 
+        x_left_flip = cv2.flip(x_left,1)
+        random_shadow(x_left)
         cv2.imshow("left", x_left)
-        cv2.imshow("center", x_center)
+        cv2.imshow("center", x_left_flip)
         cv2.imshow("right", x_center_b)
         cv2.waitKey(0)
-        break
+        
