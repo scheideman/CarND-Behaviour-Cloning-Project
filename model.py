@@ -7,6 +7,7 @@ from keras.layers.core import Dense, Activation, Flatten
 from keras.layers import Dropout
 from keras.regularizers import l2
 from keras.optimizers import Adam
+from keras.layers.advanced_activations import ELU
 import tensorflow as tf
 import random
 tf.python.control_flow_ops = tf
@@ -14,7 +15,7 @@ tf.python.control_flow_ops = tf
 #Retrieved from https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.ga5cuizax
 def add_random_brightness(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = .25+np.random.uniform()
+    random_bright = .18+np.random.uniform()
     image[:,:,2] = image[:,:,2]*random_bright
     image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
     return image
@@ -27,7 +28,7 @@ def flip_image(image, steering_angle):
 
 def random_shadow(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = .3 +np.random.uniform()
+    random_bright = .2 +np.random.uniform()
     
     x = random.randint(0, image.shape[1]-10)
     y = random.randint(0, image.shape[0]-10)
@@ -45,12 +46,21 @@ def random_shadow(image):
     return image
 
 #'recording/driving_log.csv'
-def generate_arrays_from_csv(path, batch_size = 40):
+def generate_arrays_from_csv(path, batch_size = 100):
+    isOn = True
     while 1:
         with open(path, newline='') as csvfile:
             file_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
             file_reader = list(file_reader)
             random.shuffle(file_reader)
+            print(len(file_reader))
+            for row in file_reader:
+                if(isOn and float(row[3]) == 0):
+                    file_reader.remove(row)
+                    isOn = False
+                elif(float(row[3]) == 0):
+                    isOn = True
+            print(len(file_reader))
             X_train = []
             y_train = []
             count = 0
@@ -89,23 +99,23 @@ def generate_arrays_from_csv(path, batch_size = 40):
                 
                 X_train.append(x_center_norm)
                 y_train.append(y_center)
-                X_train.append(x_left_norm)
-                y_train.append(y_left)
-                X_train.append(x_right_norm)
-                y_train.append(y_right)
+                #X_train.append(x_left_norm)
+                #y_train.append(y_left)
+                #X_train.append(x_right_norm)
+                #y_train.append(y_right)
 
                
 
                 if(count == (batch_size-1)):
-                    #yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
-                    yield ({'dropout_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
+                    yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
+                    #yield ({'dropout_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
                     count = 0
                     X_train = []
                     y_train = []
                 else:
                     count += 1
                 
-            yield ({'dropout_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
+            yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
             
         #yield ({'convolution2d_input_1': np.array([x_center,x_left,x_right])}, {'dense_4': np.array([y_center,y_left,y_right])})
         #yield ({'input_1': x_center, 'input_2': x_left,'input_3': x_right}, {'output': np.array([y_center,y_left,y_right])})
@@ -114,7 +124,7 @@ def generate_arrays_from_csv(path, batch_size = 40):
 
 # Create the Sequential model
 model = Sequential()
-model.add(Dropout(0.1, input_shape=(80,160,3)))
+#model.add(Dropout(0.1, input_shape=(80,160,3)))
 #model.add(Dropout(0.2))
 
 # 5X5 convolution layer
@@ -124,7 +134,8 @@ model.add(Convolution2D(24,5,5,
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
-model.add(Activation('relu'))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
 # 5X5 convolution layer
@@ -134,7 +145,8 @@ model.add(Convolution2D(36,5,5,
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
-model.add(Activation('relu'))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
 # 5X5 convolution layer
@@ -144,7 +156,8 @@ model.add(Convolution2D(48,5,5,
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
-model.add(Activation('relu'))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
 # 3X3 convolution layer
@@ -154,7 +167,8 @@ model.add(Convolution2D(64,3,3,
                         subsample=(1,1),
                         W_regularizer=l2(0.0001),
                         init='normal'))
-model.add(Activation('relu'))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
 # 3X3 convolution layer
@@ -164,25 +178,29 @@ model.add(Convolution2D(64,3,3,
                         subsample=(1,1),
                         W_regularizer=l2(0.0001),
                         init='normal'))
-model.add(Activation('relu'))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
 model.add(Flatten(input_shape=(3, 13, 64)))
 
 model.add(Dense(100,
                 W_regularizer=l2(0.0001),
-                activation='relu', init='normal'))
+                init='normal'))
 #model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 
 model.add(Dense(50,
                 W_regularizer=l2(0.0001),
-                activation='relu',init='normal'))
+                init='normal'))
 #model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 
 model.add(Dense(10,
                 W_regularizer=l2(0.0001),
-                activation='relu',init='normal'))
+                init='normal'))
 #model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 
 model.add(Dense(1,
                 W_regularizer=l2(0.0001),
@@ -195,7 +213,7 @@ print("Done compiling")
 history = model.fit_generator(generate_arrays_from_csv('recording/driving_log.csv'),
                             validation_data=generate_arrays_from_csv('recording/driving_log_val.csv'),
                             nb_val_samples=4000,
-                            samples_per_epoch=24000, nb_epoch=7)
+                            samples_per_epoch=20000, nb_epoch=7)
 
 
 model.save_weights('model.h5')
