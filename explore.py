@@ -3,6 +3,11 @@ import csv
 from random import shuffle
 import numpy as np
 import random
+from keras.layers.normalization import BatchNormalization
+import tensorflow as tf
+import math
+from keras import backend as K
+tf.python.control_flow_ops = tf
 
 def random_shadow(image):
     print(type(image))
@@ -49,7 +54,7 @@ with open('recording/driving_log.csv', newline='') as csvfile:
         x_right = cv2.resize(x_right,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
 
         
-    
+       
 
         image1 = cv2.cvtColor(x_center,cv2.COLOR_RGB2HSV)
         random_bright = .25+np.random.uniform()
@@ -67,6 +72,14 @@ with open('recording/driving_log.csv', newline='') as csvfile:
         ##print(x_center.shape)
         #print(type(x_center))
         stacked = np.array([x_center,x_left,x_right])
+
+
+        shape = x_left.shape
+        x_left = x_left[math.floor(shape[0]/5):shape[0]-12, 0:shape[1]]
+
+        x_c = x_center / 255 - 0.5
+        print(np.mean(x_c))
+        #output = BatchNormalization([x_center],input_shape=(80,160,3),mode=2)
 
         print(stacked.shape)
 
