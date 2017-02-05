@@ -52,7 +52,7 @@ def normalize_image(image):
     return image
 
 def preprocess_pipeline(image, y):
-    #crop image
+    #crop image (1/4 if the top and 25 pixels from the bottom)
     image = image[math.floor(image.shape[0]/4):image.shape[0]-25, 0:image.shape[1]]
 
     image = random_brightness(image)
@@ -67,7 +67,7 @@ def preprocess_pipeline(image, y):
     return image,y
 
 #'recording/driving_log.csv'
-def generate_arrays_from_csv(path, batch_size = 40):
+def generate_arrays_from_csv(path, batch_size = 120):
     while 1:
         isOn = True
         with open(path, newline='') as csvfile:
@@ -106,10 +106,10 @@ def generate_arrays_from_csv(path, batch_size = 40):
                 
                 X_train.append(x_center)
                 y_train.append(y_center)
-                X_train.append(x_left)
-                y_train.append(y_left)
-                X_train.append(x_right)
-                y_train.append(y_right)
+                #X_train.append(x_left)
+                #y_train.append(y_left)
+                #X_train.append(x_right)
+                #y_train.append(y_right)
 
                 if(count == (batch_size-1)):
                     #yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
@@ -144,7 +144,7 @@ model.add(Convolution2D(24,5,5,
                         input_shape=(80,160,3),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
-                        init='normal'))
+                        init='uniform'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -155,7 +155,7 @@ model.add(Convolution2D(36,5,5,
                         input_shape=(38,78,24),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
-                        init='normal'))
+                        init='uniform'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -166,7 +166,7 @@ model.add(Convolution2D(48,5,5,
                         input_shape=(17,37,36),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
-                        init='normal'))
+                        init='uniform'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -177,7 +177,7 @@ model.add(Convolution2D(64,3,3,
                         input_shape=(7,17,48),
                         subsample=(1,1),
                         W_regularizer=l2(0.0001),
-                        init='normal'))
+                        init='uniform'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -188,7 +188,7 @@ model.add(Convolution2D(64,3,3,
                         input_shape=(5,15,64),
                         subsample=(1,1),
                         W_regularizer=l2(0.0001),
-                        init='normal'))
+                        init='uniform'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -197,25 +197,25 @@ model.add(Flatten(input_shape=(3, 13, 64)))
 
 model.add(Dense(100,
                 W_regularizer=l2(0.0001),
-                init='normal'))
+                init='uniform'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 
 model.add(Dense(50,
                 W_regularizer=l2(0.0001),
-                init='normal'))
+                init='uniform'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 
 model.add(Dense(10,
                 W_regularizer=l2(0.0001),
-                init='normal'))
+                init='uniform'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 
 model.add(Dense(1,
                 W_regularizer=l2(0.0001),
-                init='normal'))
+                init='uniform'))
 
 model.compile(optimizer=Adam(lr=0.0001), loss = 'mse', metrics=['mean_absolute_error'])
 print("Done compiling")
@@ -224,7 +224,7 @@ print("Done compiling")
 history = model.fit_generator(generate_arrays_from_csv('recording/driving_log.csv'),
                             validation_data=generate_arrays_from_csv('recording/driving_log_val.csv'),
                             nb_val_samples=4000,
-                            samples_per_epoch=30000, nb_epoch=7)
+                            samples_per_epoch=30000, nb_epoch=4)
 
 
 model.save_weights('model.h5')
