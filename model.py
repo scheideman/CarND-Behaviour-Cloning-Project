@@ -17,7 +17,7 @@ tf.python.control_flow_ops = tf
 #Retrieved from https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.ga5cuizax
 def random_brightness(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = .18+np.random.uniform()
+    random_bright = .20+np.random.uniform()
     image[:,:,2] = image[:,:,2]*random_bright
     image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
     return image
@@ -30,7 +30,7 @@ def flip_image(image, steering_angle):
 
 def random_shadow(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = .2 +np.random.uniform()
+    random_bright = .20+np.random.uniform()
     
     x = random.randint(0, image.shape[1]-10)
     y = random.randint(0, image.shape[0]-10)
@@ -61,7 +61,7 @@ def preprocess_pipeline(image, y):
     if(random.random() <= 0.4):
         image, y = flip_image(image,y)
     
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+    #image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
 
     image = cv2.resize(image,(160,80),interpolation = cv2.INTER_AREA)
     return image,y
@@ -94,15 +94,15 @@ def generate_arrays_from_csv(path, batch_size = 120):
                     isOn = True
 
                 x_center = cv2.imread(row[0])
-                x_left = cv2.imread(row[1].strip())
-                x_right = cv2.imread(row[2].strip())
+                #x_left = cv2.imread(row[1].strip())
+                #x_right = cv2.imread(row[2].strip())
                 y_center = float(row[3])
-                y_left = float(row[3]) + 0.25
-                y_right = float(row[3]) - 0.25
+                #y_left = float(row[3]) + 0.25
+                #y_right = float(row[3]) - 0.25
 
                 x_center,y_center = preprocess_pipeline(x_center,y_center)
-                x_left,y_left = preprocess_pipeline(x_left,y_left)
-                x_right,y_right = preprocess_pipeline(x_right,y_right)
+                #x_left,y_left = preprocess_pipeline(x_left,y_left)
+                #x_right,y_right = preprocess_pipeline(x_right,y_right)
                 
                 X_train.append(x_center)
                 y_train.append(y_center)
@@ -144,7 +144,7 @@ model.add(Convolution2D(24,5,5,
                         input_shape=(80,160,3),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
-                        init='uniform'))
+                        init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -155,7 +155,7 @@ model.add(Convolution2D(36,5,5,
                         input_shape=(38,78,24),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
-                        init='uniform'))
+                        init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -166,7 +166,7 @@ model.add(Convolution2D(48,5,5,
                         input_shape=(17,37,36),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
-                        init='uniform'))
+                        init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -177,7 +177,7 @@ model.add(Convolution2D(64,3,3,
                         input_shape=(7,17,48),
                         subsample=(1,1),
                         W_regularizer=l2(0.0001),
-                        init='uniform'))
+                        init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -188,7 +188,7 @@ model.add(Convolution2D(64,3,3,
                         input_shape=(5,15,64),
                         subsample=(1,1),
                         W_regularizer=l2(0.0001),
-                        init='uniform'))
+                        init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
@@ -197,25 +197,25 @@ model.add(Flatten(input_shape=(3, 13, 64)))
 
 model.add(Dense(100,
                 W_regularizer=l2(0.0001),
-                init='uniform'))
+                init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 
 model.add(Dense(50,
                 W_regularizer=l2(0.0001),
-                init='uniform'))
+                init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 
 model.add(Dense(10,
                 W_regularizer=l2(0.0001),
-                init='uniform'))
+                init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 
 model.add(Dense(1,
                 W_regularizer=l2(0.0001),
-                init='uniform'))
+                init='normal'))
 
 model.compile(optimizer=Adam(lr=0.0001), loss = 'mse', metrics=['mean_absolute_error'])
 print("Done compiling")

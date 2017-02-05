@@ -25,7 +25,7 @@ def random_shadow(image):
     if(y + height > image.shape[0]):
         height = image.shape[0] - y
     
-    image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*random_bright
+    image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*0.15
     image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
 
     print(type(image))
@@ -81,7 +81,7 @@ with open('recording/driving_log.csv', newline='') as csvfile:
         print(stacked.shape)
 
         x_left_flip = cv2.flip(x_left,1)
-        random_shadow(x_left)
+        x_left = random_shadow(x_left)
         cv2.imshow("left", x_left)
         cv2.imshow("center", x_left_flip)
         cv2.imshow("right", x_center_b)
