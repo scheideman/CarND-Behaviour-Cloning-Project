@@ -11,10 +11,11 @@ from keras.optimizers import Adam
 from keras.layers.advanced_activations import ELU
 import tensorflow as tf
 import random
+import math
 tf.python.control_flow_ops = tf
 
 #Retrieved from https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.ga5cuizax
-def add_random_brightness(image):
+def random_brightness(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
     random_bright = .18+np.random.uniform()
     image[:,:,2] = image[:,:,2]*random_bright
@@ -34,10 +35,10 @@ def random_shadow(image):
     x = random.randint(0, image.shape[1]-10)
     y = random.randint(0, image.shape[0]-10)
 
-    width = random.randint(15,140)
+    width = random.randint(15,300)
     if(x+ width > image.shape[1]):
         x = image.shape[1] - x
-    height = random.randint(15,70)
+    height = random.randint(15,140)
     if(y + height > image.shape[0]):
         height = image.shape[0] - y
     
@@ -47,30 +48,51 @@ def random_shadow(image):
     return image
 
 def normalize_image(image):
-    print(image)
     image = image / 255 - 0.5
     return image
 
+def preprocess_pipeline(image, y):
+    #crop image
+    image = image[math.floor(image.shape[0]/4):image.shape[0]-25, 0:image.shape[1]]
+
+    image = random_brightness(image)
+    image = random_shadow(image)
+
+    if(random.random() <= 0.4):
+        image, y = flip_image(image,y)
+    
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+
+    image = cv2.resize(image,(160,80),interpolation = cv2.INTER_AREA)
+    return image,y
+
 #'recording/driving_log.csv'
 def generate_arrays_from_csv(path, batch_size = 40):
-    isOn = True
     while 1:
+        isOn = True
         with open(path, newline='') as csvfile:
             file_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
             file_reader = list(file_reader)
             random.shuffle(file_reader)
             print(len(file_reader))
-            for row in file_reader:
-                if(isOn and float(row[3]) == 0):
-                    file_reader.remove(row)
-                    isOn = False
-                elif(float(row[3]) == 0):
-                    isOn = True
+            #for row in file_reader:
+            #    if(isOn and float(row[3]) == 0):
+            #        file_reader.remove(row)
+            #        isOn = False
+            #    elif(float(row[3]) == 0):
+            #        isOn = True
             print(len(file_reader))
             X_train = []
             y_train = []
             count = 0
             for row in file_reader:
+                if(isOn and float(row[3]) == 0):
+                    #file_reader.remove(row)
+                    isOn = False
+                    continue
+                elif(float(row[3]) == 0):
+                    isOn = True
+
                 x_center = cv2.imread(row[0])
                 x_left = cv2.imread(row[1].strip())
                 x_right = cv2.imread(row[2].strip())
@@ -78,30 +100,9 @@ def generate_arrays_from_csv(path, batch_size = 40):
                 y_left = float(row[3]) + 0.25
                 y_right = float(row[3]) - 0.25
 
-                x_center = add_random_brightness(x_center)
-                x_left = add_random_brightness(x_left)
-                x_right = add_random_brightness(x_right)
-                x_center = random_shadow(x_center)
-                x_left = random_shadow(x_left)
-                x_right = random_shadow(x_right)
-                
-
-                if(random.random() <= 0.4):
-                    x_center, y_center = flip_image(x_center,y_center)
-                    x_left, y_left = flip_image(x_left,y_left)
-                    x_right, y_right = flip_image(x_right,y_right) 
-                    
-
-                x_center = cv2.cvtColor(x_center, cv2.COLOR_RGB2YUV)
-                x_left = cv2.cvtColor(x_left, cv2.COLOR_RGB2YUV)
-                x_right = cv2.cvtColor(x_right, cv2.COLOR_RGB2YUV)
-                x_center = cv2.resize(x_center,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-                x_left = cv2.resize(x_left,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-                x_right = cv2.resize(x_right,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-
-                #x_center_norm = cv2.normalize(x_center,x_center, alpha=-1, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-                #x_left_norm = cv2.normalize(x_left,x_left, alpha=-1, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-                #x_right_norm = cv2.normalize(x_right,x_left, alpha=-1, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+                x_center,y_center = preprocess_pipeline(x_center,y_center)
+                x_left,y_left = preprocess_pipeline(x_left,y_left)
+                x_right,y_right = preprocess_pipeline(x_right,y_right)
                 
                 X_train.append(x_center)
                 y_train.append(y_center)
@@ -109,8 +110,6 @@ def generate_arrays_from_csv(path, batch_size = 40):
                 y_train.append(y_left)
                 X_train.append(x_right)
                 y_train.append(y_right)
-
-               
 
                 if(count == (batch_size-1)):
                     #yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
@@ -133,6 +132,7 @@ def generate_arrays_from_csv(path, batch_size = 40):
 
 # Create the Sequential model
 model = Sequential()
+
 model.add(Lambda(normalize_image,input_shape=(80,160,3)))
 #model.add(BatchNormalization(input_shape=(80,160,3),mode=2))
 #model.add(Dropout(0.1, input_shape=(80,160,3)))

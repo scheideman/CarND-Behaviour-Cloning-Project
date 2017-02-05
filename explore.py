@@ -49,12 +49,9 @@ with open('recording/driving_log.csv', newline='') as csvfile:
         y_left = float(row[3]) + 0.25
         y_right = float(row[3]) - 0.25
 
-        x_center = cv2.resize(x_center,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-        x_left = cv2.resize(x_left,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-        x_right = cv2.resize(x_right,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-
-        
-       
+        #x_center = cv2.resize(x_center,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
+        #x_left = cv2.resize(x_left,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
+        #x_right = cv2.resize(x_right,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
 
         image1 = cv2.cvtColor(x_center,cv2.COLOR_RGB2HSV)
         random_bright = .25+np.random.uniform()
@@ -75,10 +72,10 @@ with open('recording/driving_log.csv', newline='') as csvfile:
 
 
         shape = x_left.shape
-        x_left = x_left[math.floor(shape[0]/5):shape[0]-12, 0:shape[1]]
-
+        x_left = x_left[math.floor(shape[0]/4):shape[0]-20, 0:shape[1]]
+        print(x_left.shape)
         x_c = x_center / 255 - 0.5
-        print(np.mean(x_c))
+        #print(np.mean(x_c))
         #output = BatchNormalization([x_center],input_shape=(80,160,3),mode=2)
 
         print(stacked.shape)
