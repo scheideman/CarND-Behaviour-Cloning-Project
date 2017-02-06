@@ -30,7 +30,7 @@ def flip_image(image, steering_angle):
 
 def random_shadow(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = .20+np.random.uniform()
+    random_bright = .15+np.random.uniform(0.0,0.9)
     
     x = random.randint(0, image.shape[1]-10)
     y = random.randint(0, image.shape[0]-10)
@@ -61,26 +61,19 @@ def preprocess_pipeline(image, y):
     if(random.random() <= 0.4):
         image, y = flip_image(image,y)
     
-    #image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
 
     image = cv2.resize(image,(160,80),interpolation = cv2.INTER_AREA)
     return image,y
 
 #'recording/driving_log.csv'
-def generate_arrays_from_csv(path, batch_size = 120):
+def generate_arrays_from_csv(path, batch_size = 40):
     while 1:
         isOn = True
         with open(path, newline='') as csvfile:
             file_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
             file_reader = list(file_reader)
             random.shuffle(file_reader)
-            print(len(file_reader))
-            #for row in file_reader:
-            #    if(isOn and float(row[3]) == 0):
-            #        file_reader.remove(row)
-            #        isOn = False
-            #    elif(float(row[3]) == 0):
-            #        isOn = True
             print(len(file_reader))
             X_train = []
             y_train = []
@@ -94,22 +87,22 @@ def generate_arrays_from_csv(path, batch_size = 120):
                     isOn = True
 
                 x_center = cv2.imread(row[0])
-                #x_left = cv2.imread(row[1].strip())
-                #x_right = cv2.imread(row[2].strip())
+                x_left = cv2.imread(row[1].strip())
+                x_right = cv2.imread(row[2].strip())
                 y_center = float(row[3])
-                #y_left = float(row[3]) + 0.25
-                #y_right = float(row[3]) - 0.25
+                y_left = float(row[3]) + 0.1
+                y_right = float(row[3]) - 0.1
 
                 x_center,y_center = preprocess_pipeline(x_center,y_center)
-                #x_left,y_left = preprocess_pipeline(x_left,y_left)
-                #x_right,y_right = preprocess_pipeline(x_right,y_right)
+                x_left,y_left = preprocess_pipeline(x_left,y_left)
+                x_right,y_right = preprocess_pipeline(x_right,y_right)
                 
                 X_train.append(x_center)
                 y_train.append(y_center)
-                #X_train.append(x_left)
-                #y_train.append(y_left)
-                #X_train.append(x_right)
-                #y_train.append(y_right)
+                X_train.append(x_left)
+                y_train.append(y_left)
+                X_train.append(x_right)
+                y_train.append(y_right)
 
                 if(count == (batch_size-1)):
                     #yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
@@ -180,7 +173,7 @@ model.add(Convolution2D(64,3,3,
                         init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
-model.add(Dropout(0.5))
+#model.add(Dropout(0.5))
 
 # 3X3 convolution layer
 model.add(Convolution2D(64,3,3,
@@ -191,11 +184,11 @@ model.add(Convolution2D(64,3,3,
                         init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
-model.add(Dropout(0.5))
+#model.add(Dropout(0.5))
 
 model.add(Flatten(input_shape=(3, 13, 64)))
 
-model.add(Dense(100,
+model.add(Dense(200,
                 W_regularizer=l2(0.0001),
                 init='normal'))
 model.add(Activation('relu'))
@@ -204,14 +197,14 @@ model.add(Activation('relu'))
 model.add(Dense(50,
                 W_regularizer=l2(0.0001),
                 init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 
 model.add(Dense(10,
                 W_regularizer=l2(0.0001),
                 init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 
 model.add(Dense(1,
                 W_regularizer=l2(0.0001),
@@ -221,10 +214,10 @@ model.compile(optimizer=Adam(lr=0.0001), loss = 'mse', metrics=['mean_absolute_e
 print("Done compiling")
 #history = model.fit(X_train, y_train, batch_size=100, nb_epoch=5, validation_split=0.2)
 
-history = model.fit_generator(generate_arrays_from_csv('recording/driving_log.csv'),
-                            validation_data=generate_arrays_from_csv('recording/driving_log_val.csv'),
+history = model.fit_generator(generate_arrays_from_csv('../recording/driving_log.csv'),
+                            validation_data=generate_arrays_from_csv('../recording/driving_log_val.csv'),
                             nb_val_samples=4000,
-                            samples_per_epoch=30000, nb_epoch=4)
+                            samples_per_epoch=40000, nb_epoch=6)
 
 
 model.save_weights('model.h5')
