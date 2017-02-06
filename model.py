@@ -30,7 +30,7 @@ def flip_image(image, steering_angle):
 
 def random_shadow(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = .15+np.random.uniform(0.0,0.9)
+    random_bright = .2+np.random.uniform()
     
     x = random.randint(0, image.shape[1]-10)
     y = random.randint(0, image.shape[0]-10)
@@ -67,7 +67,7 @@ def preprocess_pipeline(image, y):
     return image,y
 
 #'recording/driving_log.csv'
-def generate_arrays_from_csv(path, batch_size = 40):
+def generate_arrays_from_csv(path, batch_size = 120):
     while 1:
         isOn = True
         with open(path, newline='') as csvfile:
@@ -79,19 +79,19 @@ def generate_arrays_from_csv(path, batch_size = 40):
             y_train = []
             count = 0
             for row in file_reader:
-                if(isOn and float(row[3]) == 0):
+                #if(isOn and float(row[3]) == 0):
                     #file_reader.remove(row)
-                    isOn = False
-                    continue
-                elif(float(row[3]) == 0):
-                    isOn = True
+                #    isOn = False
+                #    continue
+                #elif(float(row[3]) == 0):
+                #    isOn = True
 
                 x_center = cv2.imread(row[0])
                 x_left = cv2.imread(row[1].strip())
                 x_right = cv2.imread(row[2].strip())
                 y_center = float(row[3])
-                y_left = float(row[3]) + 0.1
-                y_right = float(row[3]) - 0.1
+                y_left = float(row[3]) + 0.25
+                y_right = float(row[3]) - 0.25
 
                 x_center,y_center = preprocess_pipeline(x_center,y_center)
                 x_left,y_left = preprocess_pipeline(x_left,y_left)
@@ -99,10 +99,10 @@ def generate_arrays_from_csv(path, batch_size = 40):
                 
                 X_train.append(x_center)
                 y_train.append(y_center)
-                X_train.append(x_left)
-                y_train.append(y_left)
-                X_train.append(x_right)
-                y_train.append(y_right)
+                #X_train.append(x_left)
+                #y_train.append(y_left)
+                #X_train.append(x_right)
+                #y_train.append(y_right)
 
                 if(count == (batch_size-1)):
                     #yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
@@ -217,7 +217,7 @@ print("Done compiling")
 history = model.fit_generator(generate_arrays_from_csv('../recording/driving_log.csv'),
                             validation_data=generate_arrays_from_csv('../recording/driving_log_val.csv'),
                             nb_val_samples=4000,
-                            samples_per_epoch=40000, nb_epoch=6)
+                            samples_per_epoch=40000, nb_epoch=4)
 
 
 model.save_weights('model.h5')
