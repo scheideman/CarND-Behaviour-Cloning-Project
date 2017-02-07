@@ -17,7 +17,10 @@ tf.python.control_flow_ops = tf
 #Retrieved from https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.ga5cuizax
 def random_brightness(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = .20+np.random.uniform()
+    random_bright = 1
+    if(random.random() <= 0.35):
+        random_bright = .2
+    
     image[:,:,2] = image[:,:,2]*random_bright
     image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
     return image
@@ -53,12 +56,12 @@ def normalize_image(image):
 
 def preprocess_pipeline(image, y):
     #crop image (1/4 if the top and 25 pixels from the bottom)
-    image = image[math.floor(image.shape[0]/4):image.shape[0]-25, 0:image.shape[1]]
+    #image = image[math.floor(image.shape[0]/4):image.shape[0]-25, 0:image.shape[1]]
 
     image = random_brightness(image)
     image = random_shadow(image)
 
-    if(random.random() <= 0.4):
+    if(random.random() <= 0.6):
         image, y = flip_image(image,y)
     
     image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
@@ -67,7 +70,7 @@ def preprocess_pipeline(image, y):
     return image,y
 
 #'recording/driving_log.csv'
-def generate_arrays_from_csv(path, batch_size = 120):
+def generate_arrays_from_csv(path, batch_size = 40):
     while 1:
         isOn = True
         with open(path, newline='') as csvfile:
@@ -99,10 +102,10 @@ def generate_arrays_from_csv(path, batch_size = 120):
                 
                 X_train.append(x_center)
                 y_train.append(y_center)
-                #X_train.append(x_left)
-                #y_train.append(y_left)
-                #X_train.append(x_right)
-                #y_train.append(y_right)
+                X_train.append(x_left)
+                y_train.append(y_left)
+                X_train.append(x_right)
+                y_train.append(y_right)
 
                 if(count == (batch_size-1)):
                     #yield ({'convolution2d_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
@@ -197,14 +200,14 @@ model.add(Activation('relu'))
 model.add(Dense(50,
                 W_regularizer=l2(0.0001),
                 init='normal'))
-#model.add(Activation('relu'))
-model.add(ELU(alpha=1.0))
+model.add(Activation('relu'))
+#model.add(ELU(alpha=1.0))
 
 model.add(Dense(10,
                 W_regularizer=l2(0.0001),
                 init='normal'))
-#model.add(Activation('relu'))
-model.add(ELU(alpha=1.0))
+model.add(Activation('relu'))
+#model.add(ELU(alpha=1.0))
 
 model.add(Dense(1,
                 W_regularizer=l2(0.0001),
