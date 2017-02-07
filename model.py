@@ -18,8 +18,8 @@ tf.python.control_flow_ops = tf
 def random_brightness(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
     random_bright = 1
-    if(random.random() <= 0.35):
-        random_bright = .2
+    if(random.random() <= 0.5):
+        random_bright = .35
     
     image[:,:,2] = image[:,:,2]*random_bright
     image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
@@ -33,7 +33,7 @@ def flip_image(image, steering_angle):
 
 def random_shadow(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = .2+np.random.uniform()
+    random_bright = .35
     
     x = random.randint(0, image.shape[1]-10)
     y = random.randint(0, image.shape[0]-10)
@@ -58,13 +58,13 @@ def preprocess_pipeline(image, y):
     #crop image (1/4 if the top and 25 pixels from the bottom)
     #image = image[math.floor(image.shape[0]/4):image.shape[0]-25, 0:image.shape[1]]
 
-    image = random_brightness(image)
+    image = random_brightness(image)    
     image = random_shadow(image)
 
     if(random.random() <= 0.6):
         image, y = flip_image(image,y)
     
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
     image = cv2.resize(image,(160,80),interpolation = cv2.INTER_AREA)
     return image,y
