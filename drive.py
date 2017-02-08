@@ -40,9 +40,9 @@ def telemetry(sid, data):
     image_array = np.asarray(image)
 
     #downsample image
-    image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2YUV)
+    image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2HSV)
 
-    image_array = image_array[math.floor(image_array.shape[0]/4):image_array.shape[0]-25, 0:image_array.shape[1]]
+    image_array = image_array[math.floor(image_array.shape[0]/5):image_array.shape[0]-25, 0:image_array.shape[1]]
     
     #image_array = cv2.resize(image_array,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
     image_array = cv2.resize(image_array,(160,80),interpolation = cv2.INTER_AREA)
