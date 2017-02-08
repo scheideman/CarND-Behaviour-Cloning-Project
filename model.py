@@ -176,7 +176,7 @@ model.add(Convolution2D(64,3,3,
                         init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
-#model.add(Dropout(0.5))
+model.add(Dropout(0.5))
 
 # 3X3 convolution layer
 model.add(Convolution2D(64,3,3,
@@ -187,11 +187,11 @@ model.add(Convolution2D(64,3,3,
                         init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
-#model.add(Dropout(0.5))
+model.add(Dropout(0.5))
 
 model.add(Flatten(input_shape=(3, 13, 64)))
 
-model.add(Dense(200,
+model.add(Dense(100,
                 W_regularizer=l2(0.0001),
                 init='normal'))
 model.add(Activation('relu'))
