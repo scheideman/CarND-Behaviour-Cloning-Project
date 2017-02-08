@@ -191,8 +191,8 @@ model.add(Dropout(0.5))
 
 model.add(Flatten(input_shape=(3, 13, 64)))
 
-model.add(Dense(100,
-                W_regularizer=l2(0.0001),
+model.add(Dense(200,
+                W_regularizer=l2(0.0002),
                 init='normal'))
 model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
@@ -220,7 +220,7 @@ print("Done compiling")
 history = model.fit_generator(generate_arrays_from_csv('../recording/driving_log.csv'),
                             validation_data=generate_arrays_from_csv('../recording/driving_log_val.csv'),
                             nb_val_samples=4000,
-                            samples_per_epoch=40000, nb_epoch=6)
+                            samples_per_epoch=40000, nb_epoch=7)
 
 
 model.save_weights('model.h5')
