@@ -138,7 +138,7 @@ model.add(Lambda(normalize_image,input_shape=(80,160,3)))
 #model.add(Dropout(0.05))
 
 # 5X5 convolution layer
-model.add(Convolution2D(24,5,5,
+model.add(Convolution2D(24,3,3,
                         border_mode='valid',
                         input_shape=(80,160,3),
                         subsample=(2,2),
@@ -149,9 +149,9 @@ model.add(Activation('relu'))
 model.add(Dropout(0.5))
 
 # 5X5 convolution layer
-model.add(Convolution2D(36,5,5,
+model.add(Convolution2D(36,3,3,
                         border_mode='valid',
-                        input_shape=(38,78,24),
+                        input_shape=(39,79,24),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -160,9 +160,9 @@ model.add(Activation('relu'))
 model.add(Dropout(0.5))
 
 # 5X5 convolution layer
-model.add(Convolution2D(48,5,5,
+model.add(Convolution2D(48,3,3,
                         border_mode='valid',
-                        input_shape=(17,37,36),
+                        input_shape=(19,39,36),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -173,7 +173,7 @@ model.add(Dropout(0.5))
 # 3X3 convolution layer
 model.add(Convolution2D(64,3,3,
                         border_mode='valid',
-                        input_shape=(7,17,48),
+                        input_shape=(9,19,48),
                         subsample=(1,1),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -184,7 +184,7 @@ model.add(Dropout(0.5))
 # 3X3 convolution layer
 model.add(Convolution2D(64,3,3,
                         border_mode='valid',
-                        input_shape=(5,15,64),
+                        input_shape=(7,17,64),
                         subsample=(1,1),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -192,7 +192,7 @@ model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
-model.add(Flatten(input_shape=(3, 13, 64)))
+model.add(Flatten(input_shape=(5, 15, 64)))
 
 model.add(Dense(200,
                 W_regularizer=l2(0.0002),
