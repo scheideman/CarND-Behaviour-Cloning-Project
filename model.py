@@ -17,9 +17,8 @@ tf.python.control_flow_ops = tf
 #Retrieved from https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.ga5cuizax
 def random_brightness(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-    random_bright = 1
-    if(random.random() <= 0.4):
-        random_bright = .25
+    
+    random_bright = .25
     
     image[:,:,2] = image[:,:,2]*random_bright
     image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
@@ -31,21 +30,23 @@ def flip_image(image, steering_angle):
 
     return image, steering_angle
 
+
 def random_shadow(image):
     image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
+
     random_bright = 0.45
     
-    x = random.randint(0, image.shape[1]-10)
-    y = random.randint(0, image.shape[0]-10)
+    x = random.randint(0, image.shape[1])
+    y = random.randint(0, image.shape[0])
 
-    width = random.randint(15,300)
+    width = random.randint(int(image.shape[1]/2),image.shape[1])
     if(x+ width > image.shape[1]):
         x = image.shape[1] - x
-    height = random.randint(15,140)
+    height = random.randint(int(image.shape[0]/2),image.shape[0])
     if(y + height > image.shape[0]):
-        height = image.shape[0] - y
+        y = image.shape[0] - y
     
-    image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*random_bright
+    image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*0.15
     image = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
 
     return image
@@ -57,10 +58,12 @@ def normalize_image(image):
 def preprocess_pipeline(image, y):
     #crop image (1/4 if the top and 25 pixels from the bottom)
     image = image[math.floor(image.shape[0]/5):image.shape[0]-25, 0:image.shape[1]]
-
-    image = random_brightness(image)    
-    image = random_shadow(image)
-
+    
+    if(random.random() <= 0.4):
+        image = random_brightness(image)    
+    if(random.random() <= 0.4):
+        image = random_shadow(image)
+    
     if(random.random() <= 0.6):
         image, y = flip_image(image,y)
     
@@ -191,7 +194,7 @@ model.add(Dropout(0.5))
 
 model.add(Flatten(input_shape=(3, 13, 64)))
 
-model.add(Dense(200,
+model.add(Dense(250,
                 W_regularizer=l2(0.0002),
                 init='normal'))
 model.add(Activation('relu'))
