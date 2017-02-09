@@ -194,7 +194,7 @@ model.add(Dropout(0.5))
 
 model.add(Flatten(input_shape=(3, 13, 64)))
 
-model.add(Dense(250,
+model.add(Dense(200,
                 W_regularizer=l2(0.0002),
                 init='normal'))
 model.add(Activation('relu'))
