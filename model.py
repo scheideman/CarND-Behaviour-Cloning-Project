@@ -69,7 +69,7 @@ def preprocess_pipeline(image, y):
     
     image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
-    image = cv2.resize(image,(160,80),interpolation = cv2.INTER_AREA)
+    image = cv2.resize(image,(80,80),interpolation = cv2.INTER_AREA)
     return image,y
 
 #'recording/driving_log.csv'
@@ -132,7 +132,7 @@ def generate_arrays_from_csv(path, batch_size = 40):
 # Create the Sequential model
 model = Sequential()
 
-model.add(Lambda(normalize_image,input_shape=(80,160,3)))
+model.add(Lambda(normalize_image,input_shape=(80,80,3)))
 #model.add(BatchNormalization(input_shape=(80,160,3),mode=2))
 #model.add(Dropout(0.1, input_shape=(80,160,3)))
 #model.add(Dropout(0.05))
@@ -140,7 +140,7 @@ model.add(Lambda(normalize_image,input_shape=(80,160,3)))
 # 5X5 convolution layer
 model.add(Convolution2D(24,3,3,
                         border_mode='valid',
-                        input_shape=(80,160,3),
+                        input_shape=(80,80,3),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -151,7 +151,7 @@ model.add(Dropout(0.5))
 # 5X5 convolution layer
 model.add(Convolution2D(36,3,3,
                         border_mode='valid',
-                        input_shape=(39,79,24),
+                        input_shape=(39,39,24),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -162,7 +162,7 @@ model.add(Dropout(0.5))
 # 5X5 convolution layer
 model.add(Convolution2D(48,3,3,
                         border_mode='valid',
-                        input_shape=(19,39,36),
+                        input_shape=(19,19,48),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -170,31 +170,9 @@ model.add(Activation('relu'))
 #model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
-# 3X3 convolution layer
-model.add(Convolution2D(64,3,3,
-                        border_mode='valid',
-                        input_shape=(9,19,48),
-                        subsample=(1,1),
-                        W_regularizer=l2(0.0001),
-                        init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
-model.add(Dropout(0.5))
+model.add(Flatten(input_shape=(9, 9, 96)))
 
-# 3X3 convolution layer
-model.add(Convolution2D(64,3,3,
-                        border_mode='valid',
-                        input_shape=(7,17,64),
-                        subsample=(1,1),
-                        W_regularizer=l2(0.0001),
-                        init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
-model.add(Dropout(0.5))
-
-model.add(Flatten(input_shape=(5, 15, 64)))
-
-model.add(Dense(200,
+model.add(Dense(500,
                 W_regularizer=l2(0.0002),
                 init='normal'))
 model.add(Activation('relu'))
