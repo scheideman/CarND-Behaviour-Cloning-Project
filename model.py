@@ -145,7 +145,17 @@ model.add(Convolution2D(96,3,3,
 model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
-model.add(Flatten(input_shape=(9, 9, 96)))
+# 3X3 convolution layer
+model.add(Convolution2D(128,3,3,
+                        border_mode='valid',
+                        input_shape=(9,9,96,
+                        subsample=(2,2),
+                        W_regularizer=l2(0.0001),
+                        init='normal'))
+model.add(ELU(alpha=1.0))
+model.add(Dropout(0.5))
+
+model.add(Flatten(input_shape=(4, 4, 128)))
 
 model.add(Dense(500,
                 W_regularizer=l2(0.0003),
