@@ -37,7 +37,7 @@ def random_shadow(image):
     
     x = random.randint(0, image.shape[1]-10)
     y = random.randint(0, image.shape[0]-10)
-
+    print(image.shape)
     width = random.randint(15,300)
     if(x+ width > image.shape[1]):
         x = image.shape[1] - x
@@ -50,6 +50,7 @@ def random_shadow(image):
 
     return image
 
+
 def normalize_image(image):
     image = image / 255 - 0.5
     return image
@@ -58,8 +59,11 @@ def preprocess_pipeline(image, y):
     #crop image (1/4 if the top and 25 pixels from the bottom)
     image = image[math.floor(image.shape[0]/5):image.shape[0]-25, 0:image.shape[1]]
 
+    if(random.random() <= 0.35):
+         image = random_shadow(image)
+
     image = random_brightness(image)    
-    image = random_shadow(image)
+   
 
     if(random.random() <= 0.6):
         image, y = flip_image(image,y)
