@@ -64,7 +64,7 @@ def preprocess_pipeline(image, y):
     if(random.random() <= 0.4):
         image = random_shadow(image)
     
-    if(random.random() <= 0.6):
+    if(random.random() <= 0.8):
         image, y = flip_image(image,y)
     
     image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
@@ -73,7 +73,7 @@ def preprocess_pipeline(image, y):
     return image,y
 
 #'recording/driving_log.csv'
-def generate_arrays_from_csv(path, batch_size = 40):
+def generate_arrays_from_csv(path, batch_size = 50):
     while 1:
         isOn = True
         with open(path, newline='') as csvfile:
@@ -137,61 +137,61 @@ model.add(Lambda(normalize_image,input_shape=(80,80,3)))
 #model.add(Dropout(0.1, input_shape=(80,160,3)))
 #model.add(Dropout(0.05))
 
-# 5X5 convolution layer
+# 3X3 convolution layer
 model.add(Convolution2D(24,3,3,
                         border_mode='valid',
                         input_shape=(80,80,3),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
-# 5X5 convolution layer
+# 3X3 convolution layer
 model.add(Convolution2D(36,3,3,
                         border_mode='valid',
                         input_shape=(39,39,24),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
-# 5X5 convolution layer
+# 3X3 convolution layer
 model.add(Convolution2D(48,3,3,
                         border_mode='valid',
                         input_shape=(19,19,48),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
 model.add(Flatten(input_shape=(9, 9, 96)))
 
 model.add(Dense(500,
-                W_regularizer=l2(0.0002),
+                W_regularizer=l2(0.0003),
                 init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 
 model.add(Dense(50,
                 W_regularizer=l2(0.0001),
                 init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 
 model.add(Dense(10,
                 W_regularizer=l2(0.0001),
                 init='normal'))
-model.add(Activation('relu'))
-#model.add(ELU(alpha=1.0))
+#model.add(Activation('relu'))
+model.add(ELU(alpha=1.0))
 
 model.add(Dense(1,
-                W_regularizer=l2(0.0001),
+                W_regularizer=l2(0.001),
                 init='normal'))
 
 model.compile(optimizer=Adam(lr=0.0001), loss = 'mse', metrics=['mean_absolute_error'])
@@ -201,7 +201,7 @@ print("Done compiling")
 history = model.fit_generator(generate_arrays_from_csv('../recording/driving_log.csv'),
                             validation_data=generate_arrays_from_csv('../recording/driving_log_val.csv'),
                             nb_val_samples=4000,
-                            samples_per_epoch=40000, nb_epoch=7)
+                            samples_per_epoch=45000, nb_epoch=7)
 
 
 model.save_weights('model.h5')
