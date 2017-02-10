@@ -44,16 +44,11 @@ def telemetry(sid, data):
 
     image_array = image_array[math.floor(image_array.shape[0]/5):image_array.shape[0]-25, 0:image_array.shape[1]]
     
-    #image_array = cv2.resize(image_array,None,fx=0.5, fy=0.5, interpolation = cv2.INTER_CUBIC)
-    image_array = cv2.resize(image_array,(160,80),interpolation = cv2.INTER_AREA)
-    #cv2.normalize(image_array,image_array,0,1,cv2.NORM_MINMAX)
-    #image_array = cv2.normalize( image_array, image_array,alpha=-1, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-    #image_array = image_array / 255 -0.5
-    #print(image_array[0])
+    image_array = cv2.resize(image_array,(80,80),interpolation = cv2.INTER_AREA)
+
     transformed_image_array = image_array[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
-    # The driving model currently just outputs a constant throttle. Feel free to edit this.
     throttle = 0.2
     print(steering_angle, throttle)
     send_control(steering_angle, throttle)

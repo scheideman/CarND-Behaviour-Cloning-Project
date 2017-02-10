@@ -46,6 +46,7 @@ def random_shadow(image):
 
     return image
 
+
 def normalize_image(image):
     image = image / 255 - 0.5
     return image
