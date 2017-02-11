@@ -29,7 +29,6 @@ def flip_image(image, steering_angle):
 
     return image, steering_angle
 
-
 def random_shadow(image):
     bright_factor = 0.3
     
@@ -115,7 +114,6 @@ def data_generator(samples, batch_size = 50):
             
             X_train, y_train = sklearn.utils.shuffle(np.array(X_train), np.array(y_train))
             yield ({'lambda_input_1': X_train}, {'dense_4': y_train})
-                
 
 
 # Create the Sequential model
@@ -124,7 +122,7 @@ model = Sequential()
 model.add(Lambda(normalize_image,input_shape=(64,64,3)))
 
 # 3X3 convolution layer
-model.add(Convolution2D(32,3,3,
+model.add(Convolution2D(24,3,3,
                         border_mode='valid',
                         input_shape=(64,64,3),
                         subsample=(2,2),
@@ -134,9 +132,9 @@ model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
 # 3X3 convolution layer
-model.add(Convolution2D(64,3,3,
+model.add(Convolution2D(48,3,3,
                         border_mode='valid',
-                        input_shape=(31,31,32),
+                        input_shape=(31,31,24),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -144,16 +142,16 @@ model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
 # 3X3 convolution layer
-model.add(Convolution2D(128,3,3,
+model.add(Convolution2D(96,3,3,
                         border_mode='valid',
-                        input_shape=(15,15,64),
+                        input_shape=(15,15,96),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
 model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
-model.add(Flatten(input_shape=(7, 7, 128)))
+model.add(Flatten(input_shape=(7, 7, 96)))
 
 model.add(Dense(500,
                 W_regularizer=l2(0.0003),
