@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 import cv2
+from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers.convolutional import Convolution2D, Cropping2D
 from keras.layers.core import Dense, Activation, Flatten, Lambda
@@ -12,6 +13,7 @@ from keras.layers.advanced_activations import ELU
 import tensorflow as tf
 import random
 import math
+import sklearn
 tf.python.control_flow_ops = tf
 
 def darken_image(image):    
@@ -26,7 +28,6 @@ def flip_image(image, steering_angle):
     steering_angle = steering_angle * -1
 
     return image, steering_angle
-
 
 def random_shadow(image):
     bright_factor = 0.3
@@ -53,8 +54,8 @@ def normalize_image(image):
 
 def preprocess_pipeline(image, y):
     image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-    #crop image (1/5if the top and 25 pixels from the bottom)
-    image = image[math.floor(image.shape[0]/5):image.shape[0]-25, 0:image.shape[1]]
+    #crop image 
+    image = image[50:(image.shape[0]-25), 0:image.shape[1]]
     
     if(random.random() <= 0.4):
         image = darken_image(image)    
@@ -64,23 +65,35 @@ def preprocess_pipeline(image, y):
     if(random.random() <= 0.8):
         image, y = flip_image(image,y)
     
-    
-
-    image = cv2.resize(image,(80,80),interpolation = cv2.INTER_AREA)
+    image = cv2.resize(image,(64,64),interpolation = cv2.INTER_AREA)
     return image,y
 
-def generate_arrays_from_csv(path, batch_size = 50):
+
+samples = []
+path = '../recording/driving_log.csv'
+
+with open(path, newline='') as csvfile:
+    reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    samples = list(reader)
+
+train_samples, validation_samples = train_test_split(samples, test_size=0.1)
+
+
+def data_generator(samples, batch_size = 50):
     while 1:
-        isOn = True
-        with open(path, newline='') as csvfile:
-            file_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-            file_reader = list(file_reader)
-            random.shuffle(file_reader)
-            print(len(file_reader))
+        random.shuffle(samples)
+        print(len(samples))
+        num_samples = len(samples)
+        X_train = []
+        y_train = []
+        count = 0
+        for offset in range(0, num_samples, batch_size):
+            #for row in file_reader:
+            
+            batch_samples = samples[offset:offset+batch_size]
             X_train = []
             y_train = []
-            count = 0
-            for row in file_reader:
+            for row in batch_samples:
                 x_center = cv2.imread(row[0])
                 x_left = cv2.imread(row[1].strip())
                 x_right = cv2.imread(row[2].strip())
@@ -98,28 +111,20 @@ def generate_arrays_from_csv(path, batch_size = 50):
                 y_train.append(y_left)
                 X_train.append(x_right)
                 y_train.append(y_right)
-
-                if(count == (batch_size-1)):
-                    yield ({'lambda_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
-                    count = 0
-                    X_train = []
-                    y_train = []
-                else:
-                    count += 1
-            if(count > 0):
-                yield ({'lambda_input_1': np.array(X_train)}, {'dense_4': np.array(y_train)})
-
+            
+            X_train, y_train = sklearn.utils.shuffle(np.array(X_train), np.array(y_train))
+            yield ({'lambda_input_1': X_train}, {'dense_4': y_train})
 
 
 # Create the Sequential model
 model = Sequential()
 
-model.add(Lambda(normalize_image,input_shape=(80,80,3)))
+model.add(Lambda(normalize_image,input_shape=(64,64,3)))
 
 # 3X3 convolution layer
 model.add(Convolution2D(24,3,3,
                         border_mode='valid',
-                        input_shape=(80,80,3),
+                        input_shape=(64,64,3),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -129,7 +134,7 @@ model.add(Dropout(0.5))
 # 3X3 convolution layer
 model.add(Convolution2D(48,3,3,
                         border_mode='valid',
-                        input_shape=(39,39,24),
+                        input_shape=(31,31,24),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
@@ -139,14 +144,14 @@ model.add(Dropout(0.5))
 # 3X3 convolution layer
 model.add(Convolution2D(96,3,3,
                         border_mode='valid',
-                        input_shape=(19,19,48),
+                        input_shape=(15,15,96),
                         subsample=(2,2),
                         W_regularizer=l2(0.0001),
                         init='normal'))
 model.add(ELU(alpha=1.0))
 model.add(Dropout(0.5))
 
-model.add(Flatten(input_shape=(9, 9, 96)))
+model.add(Flatten(input_shape=(7, 7, 96)))
 
 model.add(Dense(500,
                 W_regularizer=l2(0.0003),
@@ -170,10 +175,10 @@ model.add(Dense(1,
 model.compile(optimizer=Adam(lr=0.0001), loss = 'mse', metrics=['mean_absolute_error'])
 print("Done compiling")
 
-history = model.fit_generator(generate_arrays_from_csv('../recording/driving_log.csv'),
-                            validation_data=generate_arrays_from_csv('../recording/driving_log_val.csv'),
-                            nb_val_samples=4000,
-                            samples_per_epoch=45000, nb_epoch=7)
+history = model.fit_generator(data_generator(train_samples),
+                            validation_data=data_generator(validation_samples),
+                            nb_val_samples=len(validation_samples),
+                            samples_per_epoch=len(train_samples), nb_epoch=7)
 
 
 model.save_weights('model.h5')
