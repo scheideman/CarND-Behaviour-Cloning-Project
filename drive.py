@@ -42,9 +42,9 @@ def telemetry(sid, data):
     #downsample image
     image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2HSV)
 
-    image_array = image_array[math.floor(image_array.shape[0]/5):image_array.shape[0]-25, 0:image_array.shape[1]]
+    image_array = image_array[50:image_array.shape[0]-25, 0:image_array.shape[1]]
     
-    image_array = cv2.resize(image_array,(80,80),interpolation = cv2.INTER_AREA)
+    image_array = cv2.resize(image_array,(64,64),interpolation = cv2.INTER_AREA)
 
     transformed_image_array = image_array[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.

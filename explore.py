@@ -40,10 +40,11 @@ with open('recording/driving_log.csv', newline='') as csvfile:
         shape = x_left.shape
         x_left = x_left[math.floor(shape[0]/4):shape[0]-20, 0:shape[1]]
         print(x_left.shape)
-        x_c = x_center / 255 - 0.5
+        x_c = x_center / 127.5 - 1
 
-        print(stacked.shape)
-
+        print(np.mean(x_c))
+        x_center_b = x_center_b[70:shape[0]-25,:]
+        print(x_center_b.shape)
         x_left_flip = cv2.flip(x_left,1)
         cv2.imshow("left", x_left)
         cv2.imshow("center", x_left_flip)
