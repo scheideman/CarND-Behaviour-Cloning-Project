@@ -50,15 +50,61 @@ model.add(Lambda(normalize_image,input_shape=(64,64,3)))
 - Normalizing the images in the DNN means you don't have to worry about normalization images when testing the model
 later
 
-#### Cropping
+#### Cropping:
 - The top 50 pixels are cropped to remove the horizon from the image, and the bottom 25 pixels are cropped to remove 
 the car hood from the image. Since the horizon and hood don't help the car drive they were removed.
 - model.py, line 58:
 ``` python
 image = image[50:(image.shape[0]-25), 0:image.shape[1]]
 ```
+#### Left and right images
+- Using the left and right camera images produced by the simulator was a easy way to increase the amount of training data, as well as simulate how to correct from bad positions. I experimented with different values for steering angle offset and found +- 25 to be good. So for left images you want to simulate correcting by steering right and with right images you correct by steering left. Line 102, model.py:
+``` python 
+ y_left = float(row[3]) + 0.25
+ y_right = float(row[3]) - 0.25
+ ```
 
-#### Data augmentation
+#### Data augmentation:
+- I used three methods for data augmentation: flipping the image, darkening some of the image, and adding 'shadows'. A great resource for this project is : https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.pjtjwn7p8 and is where I got the inspiration to add random shadows and darken the images. Adding shadows and darkening the image made the model more robust to shadows on the road.
+- For flipping the images I used the opencv `cv2.flip` function and changed the sign of the steering angle. The function is on line 26 in model.py
+- In order to augment the data to handle shaded portions of the road I scaled the brightness of the HSV V channel image. After experimenting I found 0.25 scaling to work well. Line  22 of model.py:
+``` python 
+bright_factor = .25
+image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+image[:,:,2] = image[:,:,2]*bright_factor
+```
+- For adding shadows I randomly created regions about half the size of the image and then applied the same process as above for darkening the region. After experimenting I found always scaling the image brightness by 0.3 worked good. Line 35, model.py;
+``` python 
+bright_factor = 0.3
+x = random.randint(0, image.shape[1])
+y = random.randint(0, image.shape[0])
+
+width = random.randint(int(image.shape[1]/2),image.shape[1])
+if(x+ width > image.shape[1]):
+    x = image.shape[1] - x
+height = random.randint(int(image.shape[0]/2),image.shape[0])
+if(y + height > image.shape[0]):
+    y = image.shape[0] - y
+image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
+```
+ - The entire preprocessing pipeline on line 55 of model.py:
+ ``` python 
+ def preprocess_pipeline(image, y):
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    #crop image 
+    image = image[50:(image.shape[0]-25), 0:image.shape[1]]
+    
+    if(random.random() <= 0.4):
+        image = darken_image(image)    
+    if(random.random() <= 0.4):
+        image = random_shadow(image)
+    
+    if(random.random() <= 0.8):
+        image, y = flip_image(image,y)
+    
+    image = cv2.resize(image,(64,64),interpolation = cv2.INTER_AREA)
+    return image,y
+```
 
 
 
