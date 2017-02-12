@@ -181,10 +181,7 @@ history = model.fit_generator(data_generator(train_samples),
                             samples_per_epoch=len(train_samples), nb_epoch=7)
 
 
-model.save_weights('model.h5')
-json_string = model.to_json()
-with open("model.json", "w") as text_file:
-    text_file.write(json_string)
+model.save('model.h5')
 
 
 
