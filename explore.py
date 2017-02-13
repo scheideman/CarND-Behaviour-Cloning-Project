@@ -11,6 +11,59 @@ tf.python.control_flow_ops = tf
 ###
 # Script for exploring dataset
 ###
+
+def darken_image(image):    
+    bright_factor = .25
+    #assuming HSV image
+    image[:,:,2] = image[:,:,2]*bright_factor
+    
+    return image
+
+def flip_image(image, steering_angle):
+    image = cv2.flip(image,1)
+    steering_angle = steering_angle * -1
+
+    return image, steering_angle
+
+def random_shadow(image):
+    bright_factor = 0.3
+    
+    x = random.randint(0, image.shape[1])
+    y = random.randint(0, image.shape[0])
+
+    width = random.randint(int(image.shape[1]/2),image.shape[1])
+    if(x+ width > image.shape[1]):
+        x = image.shape[1] - x
+    height = random.randint(int(image.shape[0]/2),image.shape[0])
+    if(y + height > image.shape[0]):
+        y = image.shape[0] - y
+    
+    #Assuming HSV image
+    image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
+
+    return image
+
+
+def normalize_image(image):
+    image = image / 255 - 0.5
+    return image
+
+def preprocess_pipeline(image, y):
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    #crop image 
+    image = image[50:(image.shape[0]-25), 0:image.shape[1]]
+    
+    if(random.random() <= 0.4):
+        image = darken_image(image)    
+    if(random.random() <= 0.4):
+        image = random_shadow(image)
+    
+    if(random.random() <= 0.8):
+        image, y = flip_image(image,y)
+    
+    image = cv2.resize(image,(64,64),interpolation = cv2.INTER_AREA)
+    return image,y
+
 with open('recording/driving_log.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
     spamreader = list(spamreader)

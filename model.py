@@ -3,7 +3,7 @@ import csv
 import cv2
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
-from keras.layers.convolutional import Convolution2D, Cropping2D
+from keras.layers.convolutional import Convolution2D
 from keras.layers.core import Dense, Activation, Flatten, Lambda
 from keras.layers import Dropout
 from keras.layers.normalization import BatchNormalization
@@ -94,6 +94,7 @@ def data_generator(samples, batch_size = 50):
             X_train = []
             y_train = []
             for row in batch_samples:
+                # Load images and preprocess
                 x_center = cv2.imread(row[0])
                 x_left = cv2.imread(row[1].strip())
                 x_right = cv2.imread(row[2].strip())
@@ -157,16 +158,19 @@ model.add(Dense(500,
                 W_regularizer=l2(0.0003),
                 init='normal'))
 model.add(ELU(alpha=1.0))
+model.add(Dropout(0.5))
 
 model.add(Dense(50,
                 W_regularizer=l2(0.0001),
                 init='normal'))
 model.add(ELU(alpha=1.0))
+model.add(Dropout(0.5))
 
 model.add(Dense(10,
                 W_regularizer=l2(0.0001),
                 init='normal'))
 model.add(ELU(alpha=1.0))
+model.add(Dropout(0.5))
 
 model.add(Dense(1,
                 W_regularizer=l2(0.001),
