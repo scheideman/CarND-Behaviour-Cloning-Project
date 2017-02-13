@@ -45,7 +45,8 @@ until the generator function is called again. This way only one batch of images 
 - model.py line 51 and line 123
 ``` python 
 def normalize_image(image):
-    image = image / 255 - 0.5
+    image = image / 
+    5 - 0.5
     return image
 ...
 model.add(Lambda(normalize_image,input_shape=(64,64,3)))
@@ -67,7 +68,7 @@ image = image[50:(image.shape[0]-25), 0:image.shape[1]]
 ![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/resized.jpg?raw=true)
 
 #### Left and right images
-- Using the left and right camera images produced by the simulator was a easy way to increase the amount of training data, as well as simulate how to correct from bad positions. I experimented with different values for steering angle offset and found +- 25 to be good. So for left images you want to simulate correcting by steering right and with right images you correct by steering left. Line 102, model.py:
+- Using the left and right camera images produced by the simulator was a easy way to increase the amount of training data, as well as simulate how to correct from bad positions. I experimented with different values for steering angle offset and found +- 0.25 to be good. So for left images you want to simulate correcting by steering right and with right images you correct by steering left. Line 102, model.py:
 ``` python 
  y_left = float(row[3]) + 0.25
  y_right = float(row[3]) - 0.25
@@ -78,7 +79,7 @@ image = image[50:(image.shape[0]-25), 0:image.shape[1]]
 - For flipping the images I used the opencv `cv2.flip` function and changed the sign of the steering angle. The function is on line 26 in model.py   
 ![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/flipped.jpg?raw=true)
 
-- In order to augment the data to handle shaded portions of the road I scaled the brightness of the HSV V channel image. After experimenting I found 0.25 scaling to work well. Line  22 of model.py:
+- In order to augment the data to handle shaded portions of the road I scaled the brightness of the HSV V channel. After experimenting I found 0.25 scaling to work well. Line  22 of model.py:
 ``` python 
 bright_factor = .25
 image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
@@ -102,7 +103,7 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
 ```
 ![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/shadow.jpg?raw=true)
 
- - The entire preprocessing pipeline on line 55 of model.py:
+ - The entire preprocessing pipeline is on line 55 of model.py. As you can see below I only apply the augmentation methods on some images.
  ``` python 
  def preprocess_pipeline(image, y):
     image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
@@ -122,9 +123,9 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
 ```
 
 ## Model
-- I initially started by recreating the model in this paper: https://arxiv.org/abs/1604.07316. And was able to successfully get the car to drive around the lake track but not the mountain track. After that I wanted to do some experimentation with different architectiures with less parameters and modified the network to get:    
+- I initially started by recreating the model in this paper: https://arxiv.org/abs/1604.07316. And was able to successfully get the car to drive around the lake track but not the mountain track. After that I wanted to do some experimentation with different architectiures and modified the network to get:    
 `INPUT -> [CONV (stride 2) -> ELU -> Dropout]*3 -> [FC -> ELU -> Dropout]*3 -> OUTPUT`
-- This model has less layers and generalized better to the unseen track. For the convolutional layers I used 3X3 filters and started with 24 depth then increased to 48 and 96 in the following two layers. All three of the convolutional layers downsample the image using a stride of two. For the fully connected layers I flatten the final convolutional layer to a 4704 length vector and then use 500, 50, 10, 1 for the next layers, with the last being the predicted steering angle. 
+- This model has less layers but more parameters and generalized better to the unseen track. For the convolutional layers I used 3X3 filters and started with 24 depth then increased to 48 and 96 in the following two layers. All three of the convolutional layers downsample the image using a stride of two. For the fully connected layers I flatten the final convolutional layer to a 4704 length vector and then use 500, 50, 10, 1 for the next layers, with the last being the predicted steering angle. 
 - For a activation function I started with RELU, but decided to try Keras implementation of the Exponential Linear Unit (ELU). Unlike RELU, the ELU does not output zero for negative inputs so will not suffer the vanishing gradient problem. After experimentation I found ELU made the model generalize better as it performed much better on the mountain track.  
 - For input into the model 64X64 images were used.
 
