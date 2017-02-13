@@ -122,10 +122,10 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
 ```
 
 ## Model
-- I initially started by recreating the model in this paper: https://arxiv.org/abs/1604.07316. And was able to successfully get the car to drive around the lake track but not the mountain track. After that I wanted to do some experimentation with different architectiures with less weights and modified the network to get:    
+- I initially started by recreating the model in this paper: https://arxiv.org/abs/1604.07316. And was able to successfully get the car to drive around the lake track but not the mountain track. After that I wanted to do some experimentation with different architectiures with less parameters and modified the network to get:    
 `INPUT -> [CONV (stride 2) -> ELU -> Dropout]*3 -> [FC -> ELU -> Dropout]*3 -> OUTPUT`
 - This model has less layers and generalized better to the unseen track. For the convolutional layers I used 3X3 filters and started with 24 depth then increased to 48 and 96 in the following two layers. All three of the convolutional layers downsample the image using a stride of two. For the fully connected layers I flatten the final convolutional layer to a 4704 length vector and then use 500, 50, 10, 1 for the next layers, with the last being the predicted steering angle. 
-- For a activation function I started with RELU, but decided to try Keras implementation of the Exponential Linear Unit (ELU). Unlike RELU the ELU does not output zero for negative inputs so will not suffer the vanishing gradient problem. After experimentation I found ELU made the model generalize better as it performed much better on the mountain track.  
+- For a activation function I started with RELU, but decided to try Keras implementation of the Exponential Linear Unit (ELU). Unlike RELU, the ELU does not output zero for negative inputs so will not suffer the vanishing gradient problem. After experimentation I found ELU made the model generalize better as it performed much better on the mountain track.  
 - For input into the model 64X64 images were used.
 
 #### Regularization
@@ -146,7 +146,7 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
 - Lake track: https://youtu.be/eecYTdzYAfY
 - Mountain track: https://youtu.be/HtZX0ISo890
 - I would typically run the car at 20 mph when testing the model in autonomous mode, any faster and the car would sometimes get stuck in a over correction loop and start swerving from one side of the road to the other.
-- Getting a reliable model for the lake track did not take me to long; however, most of the work I did with data augmentation and fine tuning was to get the car to run reliably on the mountain track. Initally the car would not do well when entering shadowed portions.
+- Getting a reliable model for the lake track did not take me too long; however, most of the work I did with data augmentation and fine tuning was to get the car to run reliably on the mountain track. Initally the car would not do well when entering shadowed portions.
 - This was a difficult project which I spent a lot of time fine tuning. But I learned a lot and it has introduced me to using  Convolutional Neural Networks for problems besides classification.
 
 
