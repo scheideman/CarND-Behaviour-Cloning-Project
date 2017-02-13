@@ -6,7 +6,6 @@ from keras.models import Sequential
 from keras.layers.convolutional import Convolution2D
 from keras.layers.core import Dense, Activation, Flatten, Lambda
 from keras.layers import Dropout
-from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import Adam
 from keras.layers.advanced_activations import ELU
@@ -173,7 +172,7 @@ model.add(Dense(1,
                 W_regularizer=l2(0.001),
                 init='normal'))
 
-model.compile(optimizer=Adam(lr=0.0001), loss = 'mse', metrics=['mean_absolute_error'])
+model.compile(optimizer=Adam(lr=0.0001), loss = 'mse')
 print("Done compiling")
 
 history = model.fit_generator(data_generator(train_samples),

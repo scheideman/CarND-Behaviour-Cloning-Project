@@ -7,25 +7,29 @@ from keras.layers.normalization import BatchNormalization
 import tensorflow as tf
 import math
 from keras import backend as K
+import copy
 tf.python.control_flow_ops = tf
 ###
 # Script for exploring dataset
 ###
 
-def darken_image(image):    
+def darken_image(img):
+    image = copy.copy(img)    
     bright_factor = .25
     #assuming HSV image
     image[:,:,2] = image[:,:,2]*bright_factor
     
     return image
 
-def flip_image(image, steering_angle):
+def flip_image(img, steering_angle):
+    image = copy.copy(img)   
     image = cv2.flip(image,1)
     steering_angle = steering_angle * -1
 
     return image, steering_angle
 
-def random_shadow(image):
+def random_shadow(img):
+    image = copy.copy(img)   
     bright_factor = 0.3
     
     x = random.randint(0, image.shape[1])
@@ -49,19 +53,27 @@ def normalize_image(image):
     return image
 
 def preprocess_pipeline(image, y):
+    cv2.imwrite("original.jpg",image)
+
     image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     #crop image 
-    image = image[50:(image.shape[0]-25), 0:image.shape[1]]
+    imageC = image[50:(image.shape[0]-25), 0:image.shape[1]]
+    image1 = darken_image(image)    
+    image2 = random_shadow(image)
+    image3, y = flip_image(image,y)
+    imageR = cv2.resize(image,(64,64),interpolation = cv2.INTER_AREA)
     
-    if(random.random() <= 0.4):
-        image = darken_image(image)    
-    if(random.random() <= 0.4):
-        image = random_shadow(image)
+    imageC = cv2.cvtColor(imageC, cv2.COLOR_HSV2RGB)
+    cv2.imwrite("cropped.jpg",imageC)
+    image1 = cv2.cvtColor(image1, cv2.COLOR_HSV2RGB)
+    cv2.imwrite("dark.jpg",image1)
+    image2 = cv2.cvtColor(image2, cv2.COLOR_HSV2RGB)
+    cv2.imwrite("shadow.jpg",image2)
+    image3 = cv2.cvtColor(image3, cv2.COLOR_HSV2RGB)
+    cv2.imwrite("flipped.jpg",image3)
+    imageR = cv2.cvtColor(imageR, cv2.COLOR_HSV2RGB)
+    cv2.imwrite("resized.jpg",imageR)
     
-    if(random.random() <= 0.8):
-        image, y = flip_image(image,y)
-    
-    image = cv2.resize(image,(64,64),interpolation = cv2.INTER_AREA)
     return image,y
 
 with open('recording/driving_log.csv', newline='') as csvfile:
@@ -77,30 +89,9 @@ with open('recording/driving_log.csv', newline='') as csvfile:
         y_left = float(row[3]) + 0.25
         y_right = float(row[3]) - 0.25
 
-        image1 = cv2.cvtColor(x_center,cv2.COLOR_RGB2HSV)
-        random_bright = .25+np.random.uniform()
-        image1[:,:,2] = image1[:,:,2]*random_bright
-        x_center_b = cv2.cvtColor(image1,cv2.COLOR_HSV2RGB)
-    
-        x_center = cv2.cvtColor(x_center, cv2.COLOR_RGB2YUV)
-
-        np.reshape(x_center,(1,x_center.shape[0],x_center.shape[1],x_center.shape[2]))
-        np.reshape(x_left,(1,x_left.shape[0],x_left.shape[1],x_left.shape[2]))
-        np.reshape(x_right,(1,x_right.shape[0],x_right.shape[1],x_right.shape[2]))
-        print(x_center.shape)
-        stacked = np.array([x_center,x_left,x_right])
-
-        shape = x_left.shape
-        x_left = x_left[math.floor(shape[0]/4):shape[0]-20, 0:shape[1]]
-        print(x_left.shape)
-        x_c = x_center / 127.5 - 1
-
-        print(np.mean(x_c))
-        x_center_b = x_center_b[70:shape[0]-25,:]
-        print(x_center_b.shape)
-        x_left_flip = cv2.flip(x_left,1)
+        
+        x_center, y_center = preprocess_pipeline(x_center,y_center)
         cv2.imshow("left", x_left)
-        cv2.imshow("center", x_left_flip)
-        cv2.imshow("right", x_center_b)
+        cv2.imshow("center", x_center)
         cv2.waitKey(0)
         
