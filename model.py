@@ -158,19 +158,16 @@ model.add(Dense(500,
                 W_regularizer=l2(0.0003),
                 init='normal'))
 model.add(ELU(alpha=1.0))
-model.add(Dropout(0.5))
 
 model.add(Dense(50,
                 W_regularizer=l2(0.0001),
                 init='normal'))
 model.add(ELU(alpha=1.0))
-model.add(Dropout(0.5))
 
 model.add(Dense(10,
                 W_regularizer=l2(0.0001),
                 init='normal'))
 model.add(ELU(alpha=1.0))
-model.add(Dropout(0.5))
 
 model.add(Dense(1,
                 W_regularizer=l2(0.001),
