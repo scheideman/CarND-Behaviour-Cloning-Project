@@ -9,6 +9,9 @@ The submission includes a model.py file, drive.py, model.h5 and a writeup report
 
 ## Preprocessing:
 
+- An example starting image:   
+![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/original.jpg?raw=true "Cropped Image")
+
 ####Generator:  
 - A generator was used for feeding data to the network so that the entire image dataset did not 
 have to be held in memory. With a python generator, the function will wait at any yield statements
@@ -57,7 +60,8 @@ the car hood from the image. Since the horizon and hood don't help the car drive
 ``` python
 image = image[50:(image.shape[0]-25), 0:image.shape[1]]
 ```
-- The images were also resized to 64X64X3. This number was chosen since after cropping the height was already 65, so I also reduced the width to increase training time. This seemed to have no negative affect on the learned model.
+- The images were also resized to 64X64X3. This number was chosen since after cropping the height was already 65, so I also reduced the width to increase training time. This seemed to have no negative affect on the learned model.   
+![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/cropped.jpg?raw=true "Cropped Image")
 
 #### Left and right images
 - Using the left and right camera images produced by the simulator was a easy way to increase the amount of training data, as well as simulate how to correct from bad positions. I experimented with different values for steering angle offset and found +- 25 to be good. So for left images you want to simulate correcting by steering right and with right images you correct by steering left. Line 102, model.py:
@@ -68,13 +72,17 @@ image = image[50:(image.shape[0]-25), 0:image.shape[1]]
 
 #### Data augmentation:
 - I used three methods for data augmentation: flipping the image, darkening some of the image, and adding 'shadows'. A great resource for this project is : https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.pjtjwn7p8 and is where I got the inspiration to add random shadows and darken the images. Adding shadows and darkening the image made the model more robust to shadows on the road.
-- For flipping the images I used the opencv `cv2.flip` function and changed the sign of the steering angle. The function is on line 26 in model.py
+- For flipping the images I used the opencv `cv2.flip` function and changed the sign of the steering angle. The function is on line 26 in model.py   
+![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/flipped.jpg?raw=true "Cropped Image")
+
 - In order to augment the data to handle shaded portions of the road I scaled the brightness of the HSV V channel image. After experimenting I found 0.25 scaling to work well. Line  22 of model.py:
 ``` python 
 bright_factor = .25
 image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 image[:,:,2] = image[:,:,2]*bright_factor
 ```
+![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/dark.jpg?raw=true "Cropped Image")
+
 - For adding shadows I randomly created regions about half the size of the image and then applied the same process as above for darkening the region. After experimenting I found always scaling the image brightness by 0.3 worked good. Line 35, model.py;
 ``` python 
 bright_factor = 0.3
@@ -89,6 +97,8 @@ if(y + height > image.shape[0]):
     y = image.shape[0] - y
 image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
 ```
+![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/shadow.jpg?raw=true "Cropped Image")
+
  - The entire preprocessing pipeline on line 55 of model.py:
  ``` python 
  def preprocess_pipeline(image, y):
@@ -108,7 +118,7 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
     return image,y
 ```
 ## Model
-- I initially started by recreating the model in this paper: https://arxiv.org/abs/1604.07316. And was able to successfully get the car to drive around the lake track but not the mountain track. I wanted to do some experimentation with different architectiures with less weights and modified the network to get:    
+- I initially started by recreating the model in this paper: https://arxiv.org/abs/1604.07316. And was able to successfully get the car to drive around the lake track but not the mountain track. After that I wanted to do some experimentation with different architectiures with less weights and modified the network to get:    
 `INPUT -> [CONV (stride 2) -> ELU -> Dropout]*3 -> [FC -> ELU -> Dropout]*3 -> OUTPUT`
 - This model has less layers and generalized better to the unseen track. For the convolutional layers I used 3X3 filters and started with 24 depth then increased to 48 and 96 in the following two layers. For the fully connected layers I flatten the final convolutional layer to 4704 length vector and then use 500, 50, 10, 1 for the next layers, with the last being the predicted steering angle.
 - For a activation function I started with RELU, but decided to try Keras implementation of the Exponential Linear Unit (ELU). Unlike RELU the ELU does not output zero for negative inputs so will not suffer the vanishing gradient problem. After experimentation I found ELU made the model generalize better as it performed much better on the mountain track.  
@@ -132,6 +142,7 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
 - Lake track: https://youtu.be/eecYTdzYAfY
 - Mountain track: https://youtu.be/HtZX0ISo890
 - I would typically run the car at 20 mph when testing the model in autonomous mode, any faster and the car would sometimes get stuck in a over correction loop and start swerving from one side of the road to the other. 
+- This was a difficult project which I spent a lot of time fine tuning. But I learned a lot and it has shown me the potential for Convolutional Neural Networks to be used for problems besides classification.
 
 
 
