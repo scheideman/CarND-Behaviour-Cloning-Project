@@ -50,19 +50,19 @@ def normalize_image(image):
 ...
 model.add(Lambda(normalize_image,input_shape=(64,64,3)))
 ```
-- Normalizing the images with a keras layer means you don't have to worry about normalization images when testing the model
+- Normalizing the images with a keras layer means you don't have to worry about normalizing images when testing the model
 later
 
 #### Cropping:
 - The top 50 pixels are cropped to remove the horizon from the image, and the bottom 25 pixels are cropped to remove 
-the car hood from the image. Since the horizon and hood don't help the car drive they were removed. Cropping made the car not wondering as much.
+the car hood from the image. Since the horizon and hood don't help the car drive they were removed. Cropping made the car not wander as much.
 - model.py, line 58:
 ``` python
 image = image[50:(image.shape[0]-25), 0:image.shape[1]]
 ```
 ![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/cropped.jpg?raw=true "Cropped Image")
 
-- The images were also resized to 64X64X3. This number was chosen since after cropping the height was already 65, so I also reduced the width to increase training time. This seemed to have no negative affect on the learned model.   
+- The images were also resized to 64X64X3. This number was chosen since after cropping the height was already 65, so I also reduced the width to decrease training time. This seemed to have no negative affect on the learned model.   
 
 ![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/resized.jpg?raw=true)
 
@@ -74,7 +74,7 @@ image = image[50:(image.shape[0]-25), 0:image.shape[1]]
  ```
 
 #### Data augmentation:
-- I used three methods for data augmentation: flipping the image, darkening some of the image, and adding 'shadows'. A great resource for this project is : https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.pjtjwn7p8 and is where I got the inspiration to add random shadows and changing image brightness. Adding shadows and darkening the image made the model more robust to shadows on the road.
+- I used three methods for data augmentation: flipping the image, darkening the image, and adding 'shadows'. A great resource for this project is : https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.pjtjwn7p8 and this is where I got the inspiration to add random shadows and changing image brightness. Adding shadows and darkening the image made the model more robust to shadows on the road.
 - For flipping the images I used the opencv `cv2.flip` function and changed the sign of the steering angle. The function is on line 26 in model.py   
 ![Alt text](https://github.com/scheideman/CarND-Behaviour-Cloning-Project/blob/master/examples/flipped.jpg?raw=true)
 
@@ -135,7 +135,7 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
 - For the loss function I used mean squared error and used the ADAM learning algorithm. The Adam optimizer is nice because it automatically adjusts the learning rate over epochs unlike SGD.
 - I used ~150,000 images (left, right, center) and split them 90/10 for the training/validation sets. See line 79 in model.py
 - The images used I created in the simulator(lake track) using a combination of driving in the center of the road as well as recovering from bad positions. In addition I drove both directions around the track, and I also used the left and right camera images. 
-- For testing I used the mountain track.
+- For testing I ran the simulator in autonomous mode on the mountain track.
 
 #### Other Hyperparameters
 - 7 epochs over ~45000 images were used. I found this number from trial and error. Anymore epochs seemed to cause overfitting. 
@@ -145,7 +145,8 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
 - The learned model drives safely on both lake track and the mountain track.
 - Lake track: https://youtu.be/eecYTdzYAfY
 - Mountain track: https://youtu.be/HtZX0ISo890
-- I would typically run the car at 20 mph when testing the model in autonomous mode, any faster and the car would sometimes get stuck in a over correction loop and start swerving from one side of the road to the other. 
+- I would typically run the car at 20 mph when testing the model in autonomous mode, any faster and the car would sometimes get stuck in a over correction loop and start swerving from one side of the road to the other.
+- Getting a reliable model for the lake track did not take me to long; however, most of the work I did with data augmentation and fine tuning was to get the car to run reliably on the mountain track. Initally the car would not do well when entering shadowed portions.
 - This was a difficult project which I spent a lot of time fine tuning. But I learned a lot and it has introduced me to using  Convolutional Neural Networks for problems besides classification.
 
 
