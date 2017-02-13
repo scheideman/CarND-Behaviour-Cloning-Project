@@ -117,6 +117,7 @@ image[y:y+height,x:x+width,2] = image[y:y+height,x:x+width,2]*bright_factor
     image = cv2.resize(image,(64,64),interpolation = cv2.INTER_AREA)
     return image,y
 ```
+
 ## Model
 - I initially started by recreating the model in this paper: https://arxiv.org/abs/1604.07316. And was able to successfully get the car to drive around the lake track but not the mountain track. After that I wanted to do some experimentation with different architectiures with less weights and modified the network to get:    
 `INPUT -> [CONV (stride 2) -> ELU -> Dropout]*3 -> [FC -> ELU -> Dropout]*3 -> OUTPUT`
